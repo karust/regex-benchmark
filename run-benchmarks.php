@@ -5,6 +5,12 @@ const PATTERNS_COUNT = 3;
 const RUN_TIMES = 10;
 
 const BUILDS = [
+    'Go Rure'      => 'cd go/rure && cargo build --release --manifest-path /regex/regex-capi/Cargo.toml && export CGO_LDFLAGS="-L/regex/target/release" && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
+    'Go Regexp2'   => 'cd go/regexp2 && go mod tidy && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
+    #'Go Speedup'   => 'cd go/std_speedup && go get github.com/grafana/regexp@speedup && go build -ldflags "-s -w" -o ./benchmark .',
+    'Go PCRE'      => 'cd go/pcre && go mod tidy && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
+    'Go Re2'       => 'cd go/re2 && go mod tidy && go build -buildvcs=false -ldflags "-s -w"  -o benchmark .',
+    'Go'           => 'cd go/std && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
     'C PCRE2'      => 'gcc -O3 -DNDEBUG c/benchmark.c -I/usr/local/include/ -lpcre2-8 -o c/bin/benchmark',
     'Crystal'      => 'crystal build crystal/benchmark.cr --release -o crystal/bin/benchmark',
     'C++ STL'      => 'g++ -std=c++11 -O3 cpp/benchmark.cpp -o cpp/bin/benchmark-stl',
@@ -15,7 +21,6 @@ const BUILDS = [
     'D dmd'        => 'dmd -O -release -inline -of=d/bin/benchmark d/benchmark.d',
     'D ldc'        => 'ldc2 -O3 -release -of=d/bin/benchmark-ldc d/benchmark.d',
     'Dart Native'  => 'mkdir -p /var/regex/dart/bin && dart2native dart/benchmark.dart -o dart/bin/benchmark',
-    'Go'           => 'go env -w GO111MODULE=auto && go build -ldflags "-s -w" -o go/bin/benchmark ./go',
     'Java'         => 'javac java/Benchmark.java',
     'Kotlin'       => 'kotlinc kotlin/benchmark.kt -include-runtime -d kotlin/benchmark.jar',
     'Nim'          => 'nim c -d:release --opt:speed --verbosity:0 -o:nim/bin/benchmark nim/benchmark.nim',
@@ -24,6 +29,12 @@ const BUILDS = [
 ];
 
 const COMMANDS = [
+    'Go Rure'           => 'export LD_LIBRARY_PATH="/regex/target/release" && go/rure/benchmark',
+    'Go Regexp2'           => 'go/regexp2/benchmark',
+    #'Go Speedup'           => 'go/std_speedup/benchmark',
+    'Go PCRE'           => 'go/pcre/benchmark',
+    'Go Re2'           => 'go/re2/benchmark',
+    'Go'           => 'go/std/benchmark',
     'C PCRE2'      => 'c/bin/benchmark',
     'Crystal'      => 'crystal/bin/benchmark',
     'C++ STL'      => 'cpp/bin/benchmark-stl',
@@ -35,7 +46,6 @@ const COMMANDS = [
     'D ldc'        => 'd/bin/benchmark-ldc',
     'Dart'         => 'dart dart/benchmark.dart',
     'Dart Native'  => 'dart/bin/benchmark',
-    'Go'           => 'go/bin/benchmark',
     'Java'         => 'java -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -classpath java Benchmark',
     'Javascript'   => 'node javascript/benchmark.js',
     'Julia'        => 'julia julia/benchmark.jl',
@@ -106,5 +116,10 @@ $results = array_walk($results, function ($result, $language) {
         return number_format($time, 2, '.', '');
     }, $result);
 
-    echo '**' . $language . '** | ' . implode(' | ', $result) . PHP_EOL;
+    if(str_contains($language, "Go")){
+        echo '**<ins>' . $language . '</ins>** | ' . implode(' | ', $result) . PHP_EOL;
+    } else {
+        echo '**' . $language . '** | ' . implode(' | ', $result) . PHP_EOL;
+    }
+
 });

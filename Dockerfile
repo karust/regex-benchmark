@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -51,11 +51,11 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E03280
         mono-devel
 
 ## C# .Net Core
-RUN wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+RUN wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        dotnet-sdk-5.0
+        dotnet-sdk-7.0
 
 ## D - DMD
 RUN wget -q http://downloads.dlang.org/releases/2.x/2.089.0/dmd_2.089.0-0_amd64.deb -O dmd_2.089.0-0_amd64.deb && \
@@ -73,19 +73,13 @@ RUN sh -c 'wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt
         dart && \
     ln -s /usr/lib/dart/bin/dart2native  /usr/local/bin/dart2native
 
-## Go
-RUN add-apt-repository ppa:longsleep/golang-backports && \
-    apt-get update && \
-    apt-get install -yq --no-install-recommends \
-        golang-go
-
 ## Java - Open
 RUN apt-get install -yq --no-install-recommends \
         openjdk-11-jre \
         openjdk-11-jdk
 
 ## Javascript - Node
-RUN curl -sL https://deb.nodesource.com/setup_15.x | bash - && \
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -yq --no-install-recommends \
         nodejs
 
@@ -120,7 +114,7 @@ RUN apt-get install -yq --no-install-recommends \
 
 ## Python 3
 RUN apt-get install -yq --no-install-recommends \
-        python3.6
+        python3.10
 
 ## Pyhton2 - PyPy2
 RUN wget -q https://downloads.python.org/pypy/pypy2.7-v7.3.3-linux64.tar.bz2 -O pypy2.7-v7.3.3-linux64.tar.bz2 && \
@@ -130,11 +124,11 @@ RUN wget -q https://downloads.python.org/pypy/pypy2.7-v7.3.3-linux64.tar.bz2 -O 
     rm pypy2.7-v7.3.3-linux64.tar.bz2
 
 ## Pyhton3 - PyPy3
-RUN wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.3-linux64.tar.bz2 -O pypy3.6-v7.3.3-linux64.tar.bz2 && \
-    tar -x -C /opt -f pypy3.6-v7.3.3-linux64.tar.bz2 && \
-    mv /opt/pypy3.6-v7.3.3-linux64 /opt/pypy3 && \
+RUN wget -q https://downloads.python.org/pypy/pypy3.10-v7.3.12-linux64.tar.bz2 -O pypy3.10-v7.3.12-linux64.tar.bz2 && \
+    tar -x -C /opt -f pypy3.10-v7.3.12-linux64.tar.bz2 && \
+    mv /opt/pypy3.10-v7.3.12-linux64 /opt/pypy3 && \
     ln -s /opt/pypy3/bin/pypy3 /usr/local/bin/pypy3 && \
-    rm pypy3.6-v7.3.3-linux64.tar.bz2
+    rm pypy3.10-v7.3.12-linux64.tar.bz2
 
 ## Ruby
 RUN apt-get install -yq --no-install-recommends \
@@ -147,6 +141,14 @@ RUN wget -q https://sh.rustup.rs -O rustup-init.sh && \
     rm rustup-init.sh && \
     echo 'export PATH=$HOME/.cargo/bin:$PATH' >> ~/.bashrc && \
     ln -s /root/.cargo/bin/cargo /usr/local/bin/cargo
+
+## Go + libs
+RUN wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz && tar -zxf go1.20.2.linux-amd64.tar.gz && mv go /usr/local &&\
+    apt-get install -yq --no-install-recommends libpcre3-dev && \
+    git clone https://github.com/rust-lang/regex.git 
+#    cargo build --release --manifest-path ./regex/regex-capi/Cargo.toml
+ENV GOROOT=/usr/local/go
+ENV PATH=$GOROOT/bin:$PATH
 
 ## Clean up
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*

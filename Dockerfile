@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM debian:12
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -15,7 +15,8 @@ RUN apt-get update && \
         tzdata \
         unzip \
         wget \
-        git
+        git \
+        ragel ninja-build automake libtool make gcc cmake pkg-config
 
 # Set the locale and timezone
 RUN locale-gen en_US.UTF-8 && \
@@ -23,7 +24,6 @@ RUN locale-gen en_US.UTF-8 && \
     dpkg-reconfigure --frontend noninteractive tzdata
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
 
 ## C
 # PCRE is installed with PHP 8
@@ -75,8 +75,8 @@ RUN sh -c 'wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt
 
 ## Java - Open
 RUN apt-get install -yq --no-install-recommends \
-        openjdk-11-jre \
-        openjdk-11-jdk
+        openjdk-17-jre \
+        openjdk-17-jdk
 
 ## Javascript - Node
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -102,15 +102,13 @@ RUN curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y && \
     /root/.nimble/bin/nimble install regex -y
 
 ## PHP
-RUN add-apt-repository ppa:ondrej/php --yes && \
-        apt-get update && \
-        apt-get install -yq --no-install-recommends \
+RUN apt-get install -yq --no-install-recommends \
             libpcre2-dev \
-            php8.0-cli
+            php
 
 ## Python 2
-RUN apt-get install -yq --no-install-recommends \
-        python2.7
+# RUN apt-get install -yq --no-install-recommends \
+#         python2.7
 
 ## Python 3
 RUN apt-get install -yq --no-install-recommends \
@@ -150,9 +148,34 @@ RUN wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz && tar -zxf go1.20.2.lin
 ENV GOROOT=/usr/local/go
 ENV PATH=$GOROOT/bin:$PATH
 
+# Hyperscan
+## Download Hyperscan
+ARG HYPERSCAN_VERSION=5.4.1
+ENV HYPERSCAN_DIR=/hyperscan
+WORKDIR ${HYPERSCAN_DIR}
+
+ADD https://github.com/intel/hyperscan/archive/refs/tags/v${HYPERSCAN_VERSION}.tar.gz /hyperscan-v${HYPERSCAN_VERSION}.tar.gz
+RUN tar xf /hyperscan-v${HYPERSCAN_VERSION}.tar.gz -C ${HYPERSCAN_DIR} --strip-components=1 && \
+    rm /hyperscan-v${HYPERSCAN_VERSION}.tar.gz
+
+## Install Hyperscan
+ENV INSTALL_DIR=/dist
+WORKDIR ${HYPERSCAN_DIR}/build
+ARG CMAKE_BUILD_TYPE=RelWithDebInfo
+
+RUN cmake -G Ninja \
+        -DBUILD_STATIC_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+        .. ninja && \
+    ninja install && \
+    mv ${HYPERSCAN_DIR}/build/lib/lib*.a ${INSTALL_DIR}/lib/
+    
+ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${INSTALL_DIR}/lib/pkgconfig"
+
+
 ## Clean up
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /*.deb /*.zip /*.gz
 
 WORKDIR /var/regex
-
 CMD ["/usr/bin/php", "/var/regex/run-benchmarks.php"]

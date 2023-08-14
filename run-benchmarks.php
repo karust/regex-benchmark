@@ -5,6 +5,7 @@ const PATTERNS_COUNT = 3;
 const RUN_TIMES = 10;
 
 const BUILDS = [
+    'Go Hyper'     => 'cd go/hyperscan && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
     'Go Rure'      => 'cd go/rure && cargo build --release --manifest-path /regex/regex-capi/Cargo.toml && export CGO_LDFLAGS="-L/regex/target/release" && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
     #'Go Speedup'   => 'cd go/std_speedup && go get github.com/grafana/regexp@speedup && go build -ldflags "-s -w" -o ./benchmark .',
     'Go PCRE'      => 'cd go/pcre && go mod tidy && go build -buildvcs=false -ldflags "-s -w" -o benchmark .',
@@ -29,6 +30,7 @@ const BUILDS = [
 ];
 
 const COMMANDS = [
+    'Go Hyper'           => 'go/hyperscan/benchmark',
     'Go Rure'           => 'export LD_LIBRARY_PATH="/regex/target/release" && go/rure/benchmark',
     'Go Regexp2'           => 'go/regexp2/benchmark',
     #'Go Speedup'           => 'go/std_speedup/benchmark',
